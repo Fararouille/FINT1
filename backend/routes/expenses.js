@@ -32,19 +32,24 @@ const upload = multer({
   },
 });
 
-// GET /api/expenses — own expenses (employe) or all (manager/comptable)
+// GET /api/expenses — own expenses (employe), all (manager), or validated only (comptable)
 router.get('/', protect, async (req, res) => {
   try {
-    let expenses;
+    let query = {};
+
     if (req.user.role === 'employe') {
-      expenses = await Expense.find({ user: req.user._id })
-        .populate('user', 'email role')
-        .sort({ createdAt: -1 });
-    } else {
-      expenses = await Expense.find()
-        .populate('user', 'email role')
-        .sort({ createdAt: -1 });
+      // Employee sees only own expenses
+      query = { user: req.user._id };
+    } else if (req.user.role === 'comptable') {
+      // Comptable sees only validated expenses (server-side filter)
+      query = { status: 'validee' };
     }
+    // Manager: no filter — sees everything
+
+    const expenses = await Expense.find(query)
+      .populate('user', 'email role')
+      .sort({ createdAt: -1 });
+
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur' });
