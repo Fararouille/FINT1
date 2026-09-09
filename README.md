@@ -108,7 +108,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 | Methode | Route | Acces | Description |
 | --- | --- | --- | --- |
-| `GET` | `/expenses` | Authentifie | Un employe voit ses notes ; manager et comptable voient toutes les notes. |
+| `GET` | `/expenses` | Authentifie | Un employe voit ses notes ; manager voit toutes les notes ; comptable voit uniquement les notes validees. |
 | `GET` | `/expenses/:id` | Authentifie | Retourne le detail d'une note. |
 | `POST` | `/expenses` | Authentifie | Cree une note avec `title`, `amount`, `description` et `receipts`. |
 | `PUT` | `/expenses/:id/validate` | Manager | Valide une note. `comment` est optionnel. |
@@ -135,6 +135,83 @@ curl -X POST http://localhost:5000/api/expenses \
 | `DELETE` | `/users/:id` | Manager | Supprime un utilisateur. |
 
 Les erreurs sont retournees au format `{"message":"..."}` avec un code HTTP `400`, `401`, `403`, `404` ou `500`.
+
+## Manuel utilisateur
+
+### Connexion
+
+1. Ouvrir l'application sur `http://localhost:3000`.
+2. Saisir votre adresse email et votre mot de passe.
+3. Cliquer sur **Se connecter**.
+
+> **Premiere connexion** : si c'est la premiere fois que vous vous connectez, un ecran vous demandera de definir un nouveau mot de passe (minimum 6 caracteres). Saisissez-le deux fois, puis cliquez sur **Definir le mot de passe**.
+
+### En tant qu'employe
+
+#### Consulter mes notes de frais
+
+- Apres la connexion, vous arrivez sur le **Tableau de bord** qui liste toutes vos notes de frais.
+- Chaque ligne affiche le titre, le statut (avec un code couleur), la date de soumission et le montant.
+- **Cliquez sur une note** pour ouvrir une modale avec les details complets : description, justificatifs joints, commentaire du manager ou du comptable.
+
+#### Creer une note de frais
+
+1. Cliquez sur **Nouvelle note** dans le menu lateral.
+2. Remplissez le formulaire :
+   - **Titre** (obligatoire) : decrivez brievement la depense.
+   - **Montant** (obligatoire) : montant en euros.
+   - **Description** : details optionnels.
+3. Joignez vos justificatifs en cliquant sur **Choisir un fichier** (JPG, PNG ou PDF, 5 Mo max, jusqu'a 5 fichiers).
+4. Cliquez sur **Creer la note**.
+
+> Une fois creee, la note a le statut **Creee**. Vous ne pouvez la supprimer que si elle n'a pas encore ete validee ou refusee.
+
+#### Supprimer une note
+
+- Dans le tableau de bord, ouvrez la note puis cliquez sur **Supprimer** (uniquement si le statut est "Creee").
+
+### En tant que manager
+
+#### Consulter toutes les notes de frais
+
+1. Cliquez sur **Toutes les notes** dans le menu lateral.
+2. Le tableau affiche les notes de tous les employes avec leur email.
+3. Utilisez les **filtres** en haut pour rechercher par statut ou par email d'employe.
+
+#### Valider ou refuser une note
+
+- A cote de chaque note avec le statut **Creee**, deux boutons s'affichent :
+  - **Valider** : la note passe au statut **Validee**. Un commentaire est optionnel.
+  - **Refuser** : une modale vous demande de saisir un **commentaire obligatoire** expliquant le refus. La note passe au statut **Refusee**.
+
+> Apres validation, la note est visible par le comptable pour traitement.
+
+#### Creer un compte utilisateur
+
+1. Cliquez sur **Creation de comptes** dans le menu lateral.
+2. Saisissez l'adresse email du nouvel employe.
+3. Choisissez un mot de passe (minimum 6 caracteres).
+4. Selectionnez le role : **Employe**, **Manager** ou **Comptable**.
+5. Cliquez sur **Creer le compte**.
+
+> L'employe devra definir son propre mot de passe lors de sa premiere connexion.
+
+### En tant que comptable
+
+#### Consulter les notes a traiter
+
+1. Cliquez sur **Toutes les notes** dans le menu lateral.
+2. Seules les notes avec le statut **Validee** sont affichees (filtre serveur).
+
+#### Traiter une note
+
+- A cote de chaque note validee, un bouton **Traiter** s'affiche.
+- Cliquez dessus et confirmez : la note passe au statut **Traitee**.
+- Le traitement indique que la note a ete prise en charge par le service comptabilite.
+
+### Mon profil
+
+- Cliquez sur **Mon profil** dans le menu lateral pour voir votre email et votre role.
 
 ## Organisation du projet
 
