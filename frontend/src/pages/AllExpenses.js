@@ -29,6 +29,7 @@ function AllExpenses() {
   };
 
   const handleValidate = async (id) => {
+    if (!window.confirm('Valider cette note de frais ?')) return;
     try {
       await authAxios.put(`/expenses/${id}/validate`);
       fetchExpenses();
@@ -57,6 +58,7 @@ function AllExpenses() {
   };
 
   const handleProcess = async (id) => {
+    if (!window.confirm('Marquer cette note comme traitée ?')) return;
     try {
       await authAxios.put(`/expenses/${id}/process`);
       fetchExpenses();
@@ -90,19 +92,11 @@ function AllExpenses() {
     }).format(amount);
   };
 
-  // Filter expenses
   const filteredExpenses = expenses.filter((expense) => {
-    // Comptable only sees 'validee'
-    if (user.role === 'comptable' && expense.status !== 'validee') {
-      return false;
-    }
-
-    // Status filter
     if (filterStatus !== 'all' && expense.status !== filterStatus) {
       return false;
     }
 
-    // Email filter
     if (filterEmail && expense.user?.email && !expense.user.email.toLowerCase().includes(filterEmail.toLowerCase())) {
       return false;
     }
