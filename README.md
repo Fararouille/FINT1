@@ -1,41 +1,36 @@
 # FINT1 - Gestion des notes de frais
 
-FINT1 est une application web qui aide les employes de SUP Herman a declarer leurs frais professionnels. Les managers valident les demandes et les comptables suivent leur traitement.
+Application web pour que les employes de SUP Herman declarent leurs frais professionnels. Un manager valide ou refuse les notes, le comptable traite celles qui sont validees.
 
 ## Fonctionnalites
 
-- Connexion par JWT et gestion des roles.
-- Creation d'une note avec titre, montant, description et justificatifs.
-- Validation ou refus par un manager.
-- Traitement des notes validees par un comptable.
-- Gestion des utilisateurs par un manager.
-- Suivi des statuts `creee`, `validee`, `refusee` et `traitee`.
+- Connexion avec JWT, 3 roles : employe, manager, comptable
+- Creation d'une note de frais avec justificatifs (image ou PDF)
+- Validation / refus par le manager
+- Traitement des notes validees par le comptable
+- Creation de comptes par le manager
+- Statuts : creee, validee, refusee, traitee
+- Filtre des notes par statut et par email
 
 ## Technologies
 
-- Backend : Node.js, Express et Mongoose.
-- Frontend : React 18, React Router et Axios.
-- Base de donnees : MongoDB.
-- Securite : JWT et bcryptjs.
+- Backend : Node.js, Express, Mongoose
+- Frontend : React 18, React Router, Axios
+- Base de donnees : MongoDB
+- Securite : JWT, bcryptjs
 
-## Installation et lancement
+## Installation
 
-### Prerequis
+Il faut Node.js et MongoDB (local ou Atlas).
 
-- Node.js 16 ou plus recent.
-- MongoDB local demarre sur `mongodb://localhost:27017`, ou MongoDB Atlas.
-- npm.
-
-Depuis le dossier `FINT1` :
-
-```powershell
+```bash
 cd backend
 npm install
-cd ..\frontend
+cd ../frontend
 npm install
 ```
 
-Le fichier `backend/.env` doit contenir une configuration adaptee a votre environnement. Ne publiez jamais un vrai secret JWT :
+Creer le fichier `backend/.env` :
 
 ```env
 PORT=5000
@@ -43,196 +38,93 @@ MONGO_URI=mongodb://localhost:27017/fint1-expenses
 JWT_SECRET=changez-cette-valeur-en-local
 ```
 
-Initialiser les comptes de demonstration :
+Initialiser les comptes de demo puis lancer :
 
-```powershell
+```bash
 cd backend
 npm run seed
-```
-
-Lancer le backend dans un premier terminal :
-
-```powershell
-cd backend
 npm start
 ```
 
-Lancer le frontend dans un second terminal :
+Dans un autre terminal :
 
-```powershell
+```bash
 cd frontend
 npm start
 ```
 
-L'interface est disponible sur [http://localhost:3000](http://localhost:3000) et l'API sur [http://localhost:5000](http://localhost:5000). Le guide detaille se trouve dans [RUN.md](RUN.md).
-
-Verification de l'API : [http://localhost:5000/api/health](http://localhost:5000/api/health).
+L'app est sur http://localhost:3000 et l'API sur http://localhost:5000.
 
 ## Comptes de demonstration
 
 | Role | Email | Mot de passe |
 | --- | --- | --- |
-| Manager | `manager@supherman.com` | `Suph3rm4n!` |
-| Comptable | `comptable@supherman.com` | `Suph3rm4n!` |
-| Employe | `employe@supherman.com` | `Suph3rm4n!` |
+| Manager | manager@supherman.com | Suph3rm4n! |
+| Comptable | comptable@supherman.com | Suph3rm4n! |
+| Employe | employe@supherman.com | Suph3rm4n! |
 
-Ces comptes sont prevus uniquement pour le developpement local.
+## API
 
-## Documentation de l'API
-
-Base URL : `http://localhost:5000/api`.
-
-Toutes les routes protegees utilisent l'en-tete suivant :
-
-```http
-Authorization: Bearer <token>
-```
+Base : `http://localhost:5000/api`, token dans l'en-tete `Authorization: Bearer <token>`.
 
 ### Authentification
 
-| Methode | Route | Acces | Description |
-| --- | --- | --- | --- |
-| `POST` | `/auth/login` | Public | Retourne un token JWT. |
-| `POST` | `/auth/first-login` | Authentifie | Definit le mot de passe initial. |
-| `GET` | `/auth/me` | Authentifie | Retourne l'utilisateur connecte. |
-
-Exemple de connexion :
-
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"employe@supherman.com","password":"Suph3rm4n!"}'
-```
+| Methode | Route | Description |
+| --- | --- | --- |
+| POST | /auth/login | Connexion, retourne un token |
+| POST | /auth/first-login | Definir le mot de passe initial |
+| GET | /auth/me | Profil de l'utilisateur connecte |
 
 ### Notes de frais
 
-| Methode | Route | Acces | Description |
-| --- | --- | --- | --- |
-| `GET` | `/expenses` | Authentifie | Un employe voit ses notes ; manager voit toutes les notes ; comptable voit uniquement les notes validees. |
-| `GET` | `/expenses/:id` | Authentifie | Retourne le detail d'une note. |
-| `POST` | `/expenses` | Authentifie | Cree une note avec `title`, `amount`, `description` et `receipts`. |
-| `PUT` | `/expenses/:id/validate` | Manager | Valide une note. `comment` est optionnel. |
-| `PUT` | `/expenses/:id/refuse` | Manager | Refuse une note. `comment` est obligatoire. |
-| `PUT` | `/expenses/:id/process` | Comptable | Marque une note comme traitee. |
-| `DELETE` | `/expenses/:id` | Proprietaire | Supprime uniquement une note encore `creee`. |
-
-La creation accepte `multipart/form-data`, jusqu'a 5 fichiers de 5 Mo maximum, en JPG, PNG ou PDF :
-
-```bash
-curl -X POST http://localhost:5000/api/expenses \
-  -H "Authorization: Bearer <jwt>" \
-  -F "title=Deplacement client" -F "amount=42.50" \
-  -F "description=Billet de train" -F "receipts=@justificatif.pdf"
-```
+| Methode | Route | Description |
+| --- | --- | --- |
+| GET | /expenses | Employe : ses notes. Manager : toutes. Comptable : notes validees |
+| GET | /expenses/:id | Detail d'une note |
+| POST | /expenses | Creer une note (titre, montant, description, fichiers) |
+| PUT | /expenses/:id/validate | Manager : valider |
+| PUT | /expenses/:id/refuse | Manager : refuser (commentaire obligatoire) |
+| PUT | /expenses/:id/process | Comptable : marquer traitee |
+| DELETE | /expenses/:id | Supprimer une note encore creee |
 
 ### Utilisateurs
 
-| Methode | Route | Acces | Description |
-| --- | --- | --- | --- |
-| `GET` | `/users` | Manager | Liste les utilisateurs. |
-| `POST` | `/users` | Manager | Cree un utilisateur. |
-| `PUT` | `/users/:id` | Manager | Modifie un utilisateur. |
-| `DELETE` | `/users/:id` | Manager | Supprime un utilisateur. |
+| Methode | Route | Description |
+| --- | --- | --- |
+| GET | /users | Liste |
+| POST | /users | Creer un compte |
+| PUT | /users/:id | Modifier |
+| DELETE | /users/:id | Supprimer |
 
-Les erreurs sont retournees au format `{"message":"..."}` avec un code HTTP `400`, `401`, `403`, `404` ou `500`.
+Les erreurs sont renvoyees au format `{"message":"..."}`.
 
 ## Manuel utilisateur
 
 ### Connexion
 
-1. Ouvrir l'application sur `http://localhost:3000`.
-2. Saisir votre adresse email et votre mot de passe.
-3. Cliquer sur **Se connecter**.
+- Aller sur http://localhost:3000
+- Entrer son email et son mot de passe
+- A la premiere connexion, un ecran demande de choisir un nouveau mot de passe
 
-> **Premiere connexion** : si c'est la premiere fois que vous vous connectez, un ecran vous demandera de definir un nouveau mot de passe (minimum 6 caracteres). Saisissez-le deux fois, puis cliquez sur **Definir le mot de passe**.
+### Employe
 
-### En tant qu'employe
+- **Creer une note** : menu "Nouvelle note", remplir le titre, le montant, la description et joindre les justificatifs (JPG, PNG ou PDF, 5 Mo max, jusqu'a 5 fichiers)
+- **Voir ses notes** : le tableau de bord liste les notes avec leur statut (code couleur) et le montant. Cliquer sur une note ouvre le detail avec les justificatifs et le commentaire du manager
+- **Supprimer** : uniquement si la note est encore au statut "creee"
 
-#### Consulter mes notes de frais
+### Manager
 
-- Apres la connexion, vous arrivez sur le **Tableau de bord** qui liste toutes vos notes de frais.
-- Chaque ligne affiche le titre, le statut (avec un code couleur), la date de soumission et le montant.
-- **Cliquez sur une note** pour ouvrir une modale avec les details complets : description, justificatifs joints, commentaire du manager ou du comptable.
+- **Toutes les notes** : le menu "Toutes les notes" affiche les notes de tous les employes avec leur email
+- **Valider** : bouton Valider a cote des notes "creee"
+- **Refuser** : bouton Refuser, il faut saisir un commentaire (obligatoire)
+- **Creer un compte** : menu "Creation de comptes", entrer l'email, un mot de passe et choisir le role
 
-#### Creer une note de frais
+### Comptable
 
-1. Cliquez sur **Nouvelle note** dans le menu lateral.
-2. Remplissez le formulaire :
-   - **Titre** (obligatoire) : decrivez brievement la depense.
-   - **Montant** (obligatoire) : montant en euros.
-   - **Description** : details optionnels.
-3. Joignez vos justificatifs en cliquant sur **Choisir un fichier** (JPG, PNG ou PDF, 5 Mo max, jusqu'a 5 fichiers).
-4. Cliquez sur **Creer la note**.
-
-> Une fois creee, la note a le statut **Creee**. Vous ne pouvez la supprimer que si elle n'a pas encore ete validee ou refusee.
-
-#### Supprimer une note
-
-- Dans le tableau de bord, ouvrez la note puis cliquez sur **Supprimer** (uniquement si le statut est "Creee").
-
-### En tant que manager
-
-#### Consulter toutes les notes de frais
-
-1. Cliquez sur **Toutes les notes** dans le menu lateral.
-2. Le tableau affiche les notes de tous les employes avec leur email.
-3. Utilisez les **filtres** en haut pour rechercher par statut ou par email d'employe.
-
-#### Valider ou refuser une note
-
-- A cote de chaque note avec le statut **Creee**, deux boutons s'affichent :
-  - **Valider** : la note passe au statut **Validee**. Un commentaire est optionnel.
-  - **Refuser** : une modale vous demande de saisir un **commentaire obligatoire** expliquant le refus. La note passe au statut **Refusee**.
-
-> Apres validation, la note est visible par le comptable pour traitement.
-
-#### Creer un compte utilisateur
-
-1. Cliquez sur **Creation de comptes** dans le menu lateral.
-2. Saisissez l'adresse email du nouvel employe.
-3. Choisissez un mot de passe (minimum 6 caracteres).
-4. Selectionnez le role : **Employe**, **Manager** ou **Comptable**.
-5. Cliquez sur **Creer le compte**.
-
-> L'employe devra definir son propre mot de passe lors de sa premiere connexion.
-
-### En tant que comptable
-
-#### Consulter les notes a traiter
-
-1. Cliquez sur **Toutes les notes** dans le menu lateral.
-2. Seules les notes avec le statut **Validee** sont affichees (filtre serveur).
-
-#### Traiter une note
-
-- A cote de chaque note validee, un bouton **Traiter** s'affiche.
-- Cliquez dessus et confirmez : la note passe au statut **Traitee**.
-- Le traitement indique que la note a ete prise en charge par le service comptabilite.
-
-### Mon profil
-
-- Cliquez sur **Mon profil** dans le menu lateral pour voir votre email et votre role.
-
-## Organisation du projet
-
-```text
-FINT1/
-├── backend/       API Express, modeles MongoDB et authentification
-├── frontend/      Interface React
-├── README.md      Documentation principale
-└── RUN.md         Guide de lancement local
-```
+- **Traiter** : seul les notes "validee" sont visibles, le bouton Traiter passe la note au statut "traitee"
 
 ## GitHub
 
-Le code source est disponible sur [github.com/Fararouille/FINT1](https://github.com/Fararouille/FINT1).
-
-Pour associer un depot local au depot distant :
-
-```bash
-git remote add origin https://github.com/Fararouille/FINT1.git
-git branch -M main
-git push -u origin main
-```
+Code source : https://github.com/Fararouille/FINT1
 
 Projet de 4e annee - SUP Herman.
